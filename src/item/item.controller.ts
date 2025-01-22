@@ -2,14 +2,17 @@
 import { Controller, Get, Post, Put, Delete, Param, Body } from '@nestjs/common';
 import { ItemService } from './item.service';
 import { Prisma } from '@prisma/client';
+import { ApiOperation } from '@nestjs/swagger';
+import { CreateItemDto } from './dto/item.dto';
 
 @Controller('items')
 export class ItemController {
   constructor(private readonly itemService: ItemService) {}
 
   @Post()
-  createItem(@Body() data: Prisma.ItemCreateInput) {
-    return this.itemService.createItem(data);
+  @ApiOperation({ summary: 'Create a new item' })
+  createItem(@Body() createItemDto: CreateItemDto) {
+    return this.itemService.createItem(createItemDto);
   }
 
   @Get()
