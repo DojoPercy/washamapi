@@ -13,24 +13,88 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-
 model User {
-  id              String    @id @default(auto()) @map("_id") @db.ObjectId
+  id              String              @id @default(auto()) @map("_id") @db.ObjectId
   firstName       String
   lastName        String
-  email           String    @unique
-  phoneNumber     String    @unique
-  imageUrl        String
-  role            String    @default("user") // Default role can be 'user' or 'admin'
-  washCount       Int       @default(0)
-  premium         Boolean   @default(false)
-  verifiedPhone   Boolean   @default(false)
-  address         String?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-  lastLogin       DateTime?
-  loyaltyPoints   Int       @default(0)
+  email           String              @unique
+  phoneNumber     String              @unique
   gender          String?
+  profileImage    String?             
+  role            String              @default("user")
+  isVerified      Boolean             @default(false)       
+  washCount       Int                 @default(0)
+  premium         Boolean             @default(false)
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  lastLogin       DateTime?
+  loyaltyPoints   Int                 @default(0)
+  referralCode    String?             
+  referredBy      String? 
+  password     String? 
+
+  addresses       Address[]          
+  wallet          Wallet?            
+
+  cleaningPreferences    CleaningPreferences? @relation()
+            
+
+  Order Order[]
+}
+
+model Address {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId     String   @db.ObjectId
+  user       User     @relation(fields: [userId], references: [id])
+  label      String 
+  description String? 
+  street     String?
+  city       String?
+  state      String?
+  postalCode String?
+  country    String?
+  placeId    String? @unique
+  latitude   Float?
+  longitude  Float?
+  isPrimary  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  Order Order[]
+}
+model CleaningPreferences {
+  id              String          @id @default(auto()) @map("_id") @db.ObjectId
+  detergentType   DetergentType   @default(SCENTED)
+  fabricSoftener  Boolean         @default(true)
+  oxiclean        Boolean         @default(false)
+  starchLevel     StarchLevel     @default(NONE)
+  dryingMethod    DryingMethod    @default(AIR_DRY)
+  ironingLevel    IroningLevel    @default(NONE)
+  specialNotes    String?
+
+  user            User?           @relation(fields: [userId], references: [id])
+  userId          String?         @db.ObjectId @unique
+}
+
+model Wallet {
+  id         String               @id @default(auto()) @map("_id") @db.ObjectId
+  userId     String               @unique @db.ObjectId
+  user       User                 @relation(fields: [userId], references: [id])
+  credits    Float                @default(0)
+  updatedAt  DateTime             @updatedAt
+  createdAt  DateTime             @default(now())
+
+  transactions WalletTransaction[]
+}
+
+model WalletTransaction {
+  id          String     @id @default(auto()) @map("_id") @db.ObjectId
+  walletId    String     @db.ObjectId
+  wallet      Wallet     @relation(fields: [walletId], references: [id])
+  amount      Float
+  type        String     // e.g., "credit", "debit"
+  description String?
+  createdAt   DateTime   @default(now())
 }
 
 model Category {
@@ -51,3 +115,168 @@ model Item {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 }
+
+enum DetergentType {
+  SCENTED
+  HYPOALLERGENIC
+}
+
+enum StarchLevel {
+  NONE
+  LIGHT
+  MEDIUM
+  HEAVY
+}
+
+enum DryingMethod {
+  AIR_DRY
+  TUMBLE_DRY
+  SUN_DRY
+}
+
+enum IroningLevel {
+  NONE
+  LIGHT
+  MEDIUM
+}
+enum ServiceType {
+  WASH_AND_FOLD
+  DRY_CLEANING
+  IRON_ONLY
+}
+
+enum OrderStatus {
+  PENDING
+  PICKUP_SCHEDULED
+  PICKED_UP
+  IN_PROGRESS
+  DELIVERED
+  COMPLETED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  UNPAID
+  PENDING
+  PAID
+  FAILED
+}
+
+enum FeeType {
+  RUSH_DELIVERY
+  NEXT_DAY_DELIVERY
+  SERVICE_FEE
+  DELIVERY_FEE
+}
+
+model Order {
+  id               String         @id @default(auto()) @map("_id") @db.ObjectId
+  userId           String         @db.ObjectId
+  user             User           @relation(fields: [userId], references: [id])
+  addressId        String         @db.ObjectId
+  address          Address        @relation(fields: [addressId], references: [id])
+  valetId          String?        @db.ObjectId
+  valet            Valet?         @relation(fields: [valetId], references: [id])
+  pickupDate       DateTime
+  pickupSlot       String
+  deliveryDate     DateTime
+  deliverySlot     String
+  status           OrderStatus    @default(PENDING)
+  paymentStatus    PaymentStatus  @default(UNPAID)
+  totalAmount      Float          @default(0)
+  specialInstructions String?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  services         OrderItem[]
+  fees             Fee[]
+  payment          Payment?
+  history          OrderHistory[]
+  review           Review?
+}
+
+model OrderItem {
+  id          String       @id @default(auto()) @map("_id") @db.ObjectId
+  orderId     String       @db.ObjectId
+  order       Order        @relation(fields: [orderId], references: [id])
+  serviceType ServiceType
+  price       Float
+  notes       String?
+
+  bagEstimate BagEstimate?
+}
+
+model BagEstimate {
+  id          String     @id @default(auto()) @map("_id") @db.ObjectId
+  orderItemId String     @db.ObjectId @unique
+  orderItem   OrderItem  @relation(fields: [orderItemId], references: [id])
+  smallCount  Int        @default(0)
+  mediumCount Int        @default(0)
+  largeCount  Int        @default(0)
+  smallPrice  Float
+  mediumPrice Float
+  largePrice  Float
+}
+
+model Fee {
+  id        String    @id @default(auto()) @map("_id") @db.ObjectId
+  orderId   String    @db.ObjectId
+  order     Order     @relation(fields: [orderId], references: [id])
+  type      FeeType
+  amount    Float
+  createdAt DateTime  @default(now())
+}
+
+model Payment {
+  id         String     @id @default(auto()) @map("_id") @db.ObjectId
+  orderId    String     @unique @db.ObjectId
+  order      Order      @relation(fields: [orderId], references: [id])
+  method     String
+  amount     Float
+  status     PaymentStatus
+  reference  String?
+  gateway    String?
+  paidAt     DateTime?
+  createdAt  DateTime   @default(now())
+}
+
+model OrderHistory {
+  id         String       @id @default(auto()) @map("_id") @db.ObjectId
+  orderId    String       @db.ObjectId
+  order      Order        @relation(fields: [orderId], references: [id])
+  status     OrderStatus
+  changedAt  DateTime     @default(now())
+  comment    String?
+}
+
+model Review {
+  id        String    @id @default(auto()) @map("_id") @db.ObjectId
+  orderId   String    @unique @db.ObjectId
+  order     Order     @relation(fields: [orderId], references: [id])
+  rating    Int       // 1 to 5
+  comment   String?
+  createdAt DateTime  @default(now())
+}
+
+model Valet {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  name       String
+  phone      String
+  status     String
+  assignedOrders Order[]
+}
+
+model Price {
+  id         String       @id @default(auto()) @map("_id") @db.ObjectId
+  category   PriceCategory
+  name       String       // e.g. "Small Bag", "Suit", "Dress"
+  description String?     
+  unitPrice  Float        // price per item or bag
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+}
+enum PriceCategory {
+  BAG
+  DRY_CLEANING
+}
+

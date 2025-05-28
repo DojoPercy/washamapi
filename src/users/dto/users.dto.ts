@@ -1,62 +1,35 @@
-/* eslint-disable prettier/prettier */
-import { Type } from 'class-transformer';
-import { IsBoolean, IsDate, IsEmail, IsEnum, IsInt, IsOptional, IsString, IsUrl } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsEmail, IsString, IsOptional, MinLength } from 'class-validator';
 
-export class UserDto {
-  @IsString()
-  id: string;
-
+export class CreateUserDto {
+  @ApiProperty({ example: 'John', description: 'First name of the user' })
   @IsString()
   firstName: string;
 
+  @ApiProperty({ example: 'Doe', description: 'Last name of the user' })
   @IsString()
   lastName: string;
 
+  @ApiProperty({ example: 'john.doe@example.com', description: 'Email address' })
   @IsEmail()
   email: string;
 
+  @ApiProperty({ example: '+1234567890', description: 'Phone number' })
   @IsString()
   phoneNumber: string;
 
-  @IsUrl()
-  imageUrl: string;
-
-  @IsString()
-  @IsOptional()
-  @IsEnum(['user', 'admin'], { message: "Role must be either 'user' or admin" })
-  role: string = 'user';
-
-  @IsInt()
-  washCount: number = 0;
-
-  @IsBoolean()
-  premium: boolean = false;
-
-  @IsBoolean()
-  verifiedPhone: boolean = false;
-
+  @ApiPropertyOptional({ example: 'user', description: 'Role of the user' })
   @IsOptional()
   @IsString()
-  address?: string;
+  role?: string;
 
-  @Type(() => Date)
-  @IsDate()
-  createdAt: Date = new Date();
-
-  @Type(() => Date)
-  @IsDate()
-  @IsOptional()
-  updatedAt: Date;
-
-  @Type(() => Date)
-  @IsDate()
-  @IsOptional()
-  lastLogin?: Date;
-
-  @IsInt()
-  loyaltyPoints: number = 0;
-
+  @ApiPropertyOptional({ example: 'male', description: 'Gender of the user' })
   @IsOptional()
   @IsString()
   gender?: string;
+
+  @ApiProperty({ description: 'User password', minLength: 6 })
+  @IsString()
+  @MinLength(6)
+  password: string;
 }
