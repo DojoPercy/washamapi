@@ -11,9 +11,11 @@ import { OrderModule } from './order/order.module';
 import { PaymentModule } from './payment/payment.module';
 import { ReviewModule } from './review/review.module';
 import { PricingModule } from './pricing/pricing.module';
+import { SlotsModule } from './slots/slots.module';
+import { NotificationModule } from './notification/notification.module';
 
 @Module({
-  imports: [UsersModule, PrismaModule, AuthModule, AddressModule, WalletModule, OrderModule, PaymentModule, ReviewModule, PricingModule],
+  imports: [UsersModule, PrismaModule, AuthModule, AddressModule, WalletModule, OrderModule, PaymentModule, ReviewModule, PricingModule, SlotsModule, NotificationModule],
   controllers: [AppController],
   providers: [AppService],
 })

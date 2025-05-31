@@ -115,6 +115,29 @@ model Item {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 }
+model Slot {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  date        DateTime
+  period      SlotPeriod
+  status      SlotStatus  @default(AVAILABLE)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@unique([date, period])
+}
+
+enum SlotPeriod {
+  MORNING
+  AFTERNOON
+}
+
+enum SlotStatus {
+  AVAILABLE
+  BLOCKED
+  BOOKED
+}
+
+
 
 enum DetergentType {
   SCENTED
